@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Produits - Mini Alibaba</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+    import { supabase } from "./supabase.js";
+
+    async function ajouterProduit() {
+      const user = (await supabase.auth.getUser()).data.user;
+      const nom = document.getElementById("nom").value;
+      const prix = document.getElementById("prix").value;
+      const image_url = document.getElementById("image_url").value;
+
+      let { error } = await supabase.from("produits").insert([
+        { vendeur_id: user.id, nom, prix, image_url }
+      ]);
+
+      if (error) alert(error.message);
+      else {
+        alert("Produit ajouté !");
+        chargerProduits();
+      }
+    }
+
+    async function chargerProduits() {
+      let { data, error } = await supabase.from("produits").select("*");
+      if (error) alert(error.message);
+      else {
+        const list = document.getElementById("liste-produits");
+        list.innerHTML = "";
+        data.forEach(p => {
+          list.innerHTML += `
+            <div class="produit">
+              <img src="${p.image_url}" alt="${p.nom}">
+              <h3>${p.nom}</h3>
+              <p>${p.prix} CFA</p>
+              <button onclick="commander(${p.id})">Commander</button>
+            </div>
+          `;
+        });
+      }
+    }
+
+    async function commander(produitId) {
+      const user = (await supabase.auth.getUser()).data.user;
+      let { error } = await supabase.from("commandes").insert([
+        { produit_id: produitId, acheteur_id: user.id, quantite: 1 }
+      ]);
+      if (error) alert(error.message);
+      else alert("Commande passée !");
+    }
+
+    window.ajouterProduit = ajouterProduit;
+    window.commander = commander;
+    window.onload = chargerProduits;
+  </script>
+</head>
+<body>
+  <h2>Produits</h2>
+  <div>
+    <input type="text" id="nom" placeholder="Nom du produit">
+    <input type="number" id="prix" placeholder="Prix">
+    <input type="text" id="image_url" placeholder="URL de l'image">
+    <button onclick="ajouterProduit()">Ajouter produit</button>
+  </div>
+  <div id="liste-produits"></div>
+</body>
+</html>
