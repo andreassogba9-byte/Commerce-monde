@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Connexion - Mini Alibaba</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+    import { supabase } from "./supabase.js";
+
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      let { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        // créer le profil en BDD
+        await supabase.from("profiles").insert([
+          { id: data.user.id, email: email, role: role }
+        ]);
+        alert("Inscription réussie !");
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      let { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+      else window.location.href = "index.html";
+    }
+
+    window.signup = signup;
+    window.login = login;
+  </script>
+</head>
+<body>
+  <h2>Connexion / Inscription</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Mot de passe">
+  <select id="role">
+    <option value="acheteur">Acheteur</option>
+    <option value="vendeur">Vendeur</option>
+  </select>
+  <button onclick="signup()">S'inscrire</button>
+  <button onclick="login()">Se connecter</button>
+</body>
+</html>
